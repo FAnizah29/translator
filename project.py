@@ -1,5 +1,4 @@
 import deepl
-from langdetect import detect
 import sys
 import csv
 
@@ -93,28 +92,33 @@ class Term:
         return self._trns_term
 
     def send_term(self):
+        fieldnames = ["Original", "Translated"]
+        stored = {"Original": self._ogterm,"Translated": self._trns_term }
         with open(
             f"{self._subject}_{self._og_lang}.csv", "a", encoding="utf-8"
         ) as file:
-            writer = csv.writer(file, delimiter="-")
-            writer.writerow((self._ogterm, self._trns_term))
+            writer = csv.DictWriter(file,fieldnames=fieldnames, delimiter=",")
+            if fieldnames not in stored:
+                writer.writeheader
+            
+            writer.writerow(stored)
 
 
 def quiz(subject, oglang):
     with open(f"{subject}_{oglang}.csv", encoding="utf-8") as file:
-        lines = file.readlines()
-        for line in map(str.strip, lines):
-            print(line)
-            og_term, trans_term = line.split("-")
+        fieldnames = ["Original", "Translated"]
+        Reader = csv.DictReader(file)
+        for row in Reader:
+            print(row)
+            og_term, trans_term = row["Original"], row["Translated"]
             for attempt in range(3):
                 correct = f"{og_term}--> {trans_term} "
-                answer = input(f"{og_term}--> \n")
+                answer = input(f"{og_term}--> \n").strip()
 
-                if answer == trans_term:
+                if answer == trans_term.strip():
                     print("correct")
                     break
                 else:
-
                     if attempt == 2:
                         print("Wrong final")
                         print(correct)
@@ -125,5 +129,5 @@ def quiz(subject, oglang):
 new_term = Term("قانون الاحتكاك", "physics", "arabic", "english (us)")
 new_term.translate()
 new_term.send_term()
-
 quiz(new_term._subject, new_term._og_lang)
+
